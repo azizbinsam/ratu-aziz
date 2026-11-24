@@ -1,0 +1,103 @@
+:root {
+  --ink: #000000;
+  --ivory: #ece9e2;
+  --stone: #8d8a82;
+  --champagne: #b8a374;
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --text: "Jost", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ink);
+  color: var(--ivory);
+  -webkit-text-size-adjust: 100%;
+}
+html.is-locked {
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--text);
+  font-weight: 300;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--champagne);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--champagne);
+  outline-offset: 4px;
+}
+
+.mark {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--stone);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+
+.btn {
+  display: inline-block;
+  padding: 1rem 2.4rem;
+  font: inherit;
+  font-weight: 400;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  color: var(--ivory);
+  background: #000000;
+  border: 1px solid rgba(236, 233, 226, 0.4);
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    color 0.3s,
+    border-color 0.3s;
+}
+.btn:hover:not(:disabled) {
+  background: var(--ivory);
+  color: var(--ink);
+  border-color: var(--ivory);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
