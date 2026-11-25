@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="bab-5" ref="root" class="rsvp">
-    <p class="mark">Bab V</p>
+    <p class="mark">RSVP</p>
 
     <div class="rsvp__wrap">
       <h2 class="rsvp__title">Konfirmasi<br />kehadiran</h2>
