@@ -2,7 +2,7 @@
 import { gsap } from 'gsap'
 import { wedding } from '~/data/wedding'
 
-const props = defineProps<{ guest: string }>()
+const props = defineProps<{ guest: string; start?: boolean }>()
 const emit = defineEmits<{ open: [] }>()
 
 const done = ref(false)
@@ -36,20 +36,19 @@ function measureAspect() {
   if (r && r.height) aspect.value = r.width / r.height
 }
 
-onMounted(() => {
-  measureAspect()
-  window.addEventListener('resize', measureAspect)
+let started = false
+
+// Amplop baru mulai muncul setelah loader selesai, supaya geraknya tidak tersendat
+// oleh unduhan foto dan font.
+function begin() {
+  if (started) return
+  started = true
   if (reduce()) {
     ready.value = true
     return
   }
-
   // Amplop muncul dari bawah layar sambil sedikit berputar, lalu berhenti miring.
-  gsap.set(pop.value, { y: () => window.innerHeight })
-  gsap.set(env.value, { rotation: -13 })
-  gsap.set(action.value, { opacity: 0, y: 14 })
-
-  entrance = gsap.timeline({ delay: 0.35 })
+  entrance = gsap.timeline({ delay: 0.2 })
   entrance
     .to(pop.value, { y: 0, duration: 1.7, ease: 'back.out(0.8)' }, 0)
     .to(env.value, { rotation: -4, duration: 1.7, ease: 'power3.out' }, 0)
@@ -59,7 +58,19 @@ onMounted(() => {
       floatTween = gsap.to(float.value, { y: -7, rotation: 0.8, duration: 2.8, ease: 'sine.inOut', yoyo: true, repeat: -1 })
       nextTick(() => btn.value?.focus({ preventScroll: true }))
     }, 1.6)
+}
+
+onMounted(() => {
+  measureAspect()
+  window.addEventListener('resize', measureAspect)
+  if (!reduce()) {
+    gsap.set(pop.value, { y: () => window.innerHeight })
+    gsap.set(env.value, { rotation: -13 })
+    gsap.set(action.value, { opacity: 0, y: 14 })
+  }
+  if (props.start) begin()
 })
+watch(() => props.start, (v) => v && begin())
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', measureAspect)
@@ -176,7 +187,7 @@ defineExpose({ open })
             <div ref="letterbox" class="env__letterbox" aria-hidden="true">
               <div ref="letter" class="letter">
                 <div class="letter__frame">
-                  <img class="letter__img" src="/images/hero.webp" alt="" decoding="async" />
+                  <img class="letter__img" src="/images/hero-bw.webp" alt="" decoding="async" />
                 </div>
               </div>
             </div>
@@ -266,7 +277,6 @@ defineExpose({ open })
   aspect-ratio: var(--ar);
   overflow: hidden;
   background: #111;
-  filter: grayscale(1) contrast(1.12);
 }
 /* Sama persis dengan keadaan awal foto hero, supaya serah-terimanya tidak terlihat */
 .letter__img {

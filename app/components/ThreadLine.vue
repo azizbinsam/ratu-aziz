@@ -25,6 +25,9 @@ const nodes = ref<ThreadNode[]>([])
 
 let total = 0
 let table: number[] = []
+let xs: number[] = []
+let ys: number[] = []
+let raf = 0
 let base = 0
 let cur = 0 // panjang tali yang sedang tergambar (dihaluskan, bukan loncat per langkah)
 let lastOffset = -1
@@ -146,9 +149,14 @@ function build() {
     total = el.getTotalLength()
     el.style.strokeDasharray = String(total)
     table = []
+    xs = []
+    ys = []
     let maxY = -Infinity
     for (let i = 0; i <= N; i++) {
-      maxY = Math.max(maxY, el.getPointAtLength((total * i) / N).y)
+      const p = el.getPointAtLength((total * i) / N)
+      xs.push(p.x)
+      ys.push(p.y)
+      maxY = Math.max(maxY, p.y)
       table.push(maxY)
     }
     cur = reduce ? total : lengthAt(headY())
@@ -180,11 +188,15 @@ function render() {
   const el = pathEl.value
   if (!el || !total) return
   const offset = total - cur
-  if (Math.abs(offset - lastOffset) < 0.05) return
+  if (Math.abs(offset - lastOffset) < 0.4) return
   lastOffset = offset
   el.style.strokeDashoffset = String(offset)
 
-  const pt = el.getPointAtLength(cur)
+  // Posisi ujung tali dihitung dari tabel sampel (tanpa menyentuh DOM tiap frame)
+  const f = Math.min(N - 1e-6, (cur / total) * N)
+  const i = Math.floor(f)
+  const t = f - i
+  const pt = { x: xs[i] + (xs[i + 1] - xs[i]) * t, y: ys[i] + (ys[i + 1] - ys[i]) * t }
   const show = !reduce && cur > 0 && cur < total - 1
   for (const c of [headEl.value, glowEl.value]) {
     if (!c) continue
@@ -209,17 +221,28 @@ function tick(_t: number, dtMs: number) {
   render()
 }
 
+// ScrollTrigger sering me-refresh berturut-turut (tiap foto termuat, ukuran layar berubah):
+// gabungkan menjadi satu kali build per frame.
+function schedule() {
+  if (raf) return
+  raf = requestAnimationFrame(() => {
+    raf = 0
+    build()
+  })
+}
+
 onMounted(() => {
   reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  ScrollTrigger.addEventListener('refresh', build)
+  ScrollTrigger.addEventListener('refresh', schedule)
   gsap.ticker.add(tick)
-  requestAnimationFrame(build)
-  window.addEventListener('load', build, { once: true })
+  schedule()
+  window.addEventListener('load', schedule, { once: true })
 })
 
 onBeforeUnmount(() => {
-  ScrollTrigger.removeEventListener('refresh', build)
+  ScrollTrigger.removeEventListener('refresh', schedule)
   gsap.ticker.remove(tick)
+  if (raf) cancelAnimationFrame(raf)
 })
 </script>
 

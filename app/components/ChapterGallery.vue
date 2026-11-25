@@ -67,17 +67,15 @@ onMounted(() => {
     })
 
     gsap.utils.toArray<HTMLElement>('.gallery__item', root.value!).forEach((item) => {
-      const image = item.querySelector('img')!
+      const inner = item.querySelector('.gallery__inner')!
+      const gray = item.querySelector('.gallery__gray')!
       const base = { trigger: item, containerAnimation: slide, scrub: true }
-      // Hitam putih berganti warna ketika foto masuk dari kanan
-      gsap.fromTo(
-        image,
-        { filter: 'grayscale(1) contrast(1.1)' },
-        { filter: 'grayscale(0) contrast(1)', ease: 'none', scrollTrigger: { ...base, start: 'left 92%', end: 'left 50%' } },
-      )
+      // Hitam putih berganti warna ketika foto masuk dari kanan. Yang dianimasikan hanya
+      // opacity lapisan abu-abu (murah), bukan filter pada foto besar (mahal).
+      gsap.fromTo(gray, { opacity: 1 }, { opacity: 0, ease: 'none', scrollTrigger: { ...base, start: 'left 92%', end: 'left 50%' } })
       // Foto bergeser sedikit di dalam bingkainya (kedalaman)
       gsap.fromTo(
-        image,
+        inner,
         { xPercent: -4, scale: 1.12 },
         { xPercent: 4, scale: 1.12, ease: 'none', scrollTrigger: { ...base, start: 'left right', end: 'right left' } },
       )
@@ -101,7 +99,10 @@ onBeforeUnmount(() => {
 
       <figure v-for="photo in photos" :key="photo.src" class="gallery__item" data-cursor="big">
         <div class="gallery__photo">
-          <img :src="photo.src" :alt="photo.alt" decoding="async" @load="onImgLoad" />
+          <div class="gallery__inner">
+            <img class="gallery__color" :src="photo.src" :alt="photo.alt" decoding="async" @load="onImgLoad" />
+            <img class="gallery__gray" :src="photo.src" alt="" aria-hidden="true" decoding="async" />
+          </div>
         </div>
       </figure>
 
@@ -161,11 +162,23 @@ onBeforeUnmount(() => {
   transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .gallery__item:hover .gallery__photo { transform: scale(1.03); }
-.gallery__photo img {
+.gallery__inner { position: relative; height: 100%; width: fit-content; }
+.gallery__color {
   display: block;
   height: 100%;
   width: auto;
   max-width: none;
+}
+.gallery__gray {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: grayscale(1) contrast(1.1); /* statis: dihitung sekali, tidak per frame */
+  will-change: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery__gray { display: none; }
 }
 .gallery__end { flex: 0 0 4vw; }
 

@@ -84,7 +84,6 @@ onBeforeUnmount(() => {
   left: 0;
   z-index: 200;
   border-radius: 50%;
-  mix-blend-mode: difference;
   will-change: transform;
 }
 .cursor__ring {
@@ -92,10 +91,12 @@ onBeforeUnmount(() => {
   height: 38px;
   border: 1px solid rgba(236, 233, 226, 0.85);
   background: rgba(236, 233, 226, 0.08);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 .cursor__dot {
   width: 6px;
   height: 6px;
   background: var(--ivory);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
 }
 </style>

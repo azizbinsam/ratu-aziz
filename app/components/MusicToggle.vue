@@ -29,11 +29,10 @@ defineEmits<{ toggle: [] }>()
   height: 2.8rem;
   padding: 0;
   color: var(--ivory);
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.72);
   border: 1px solid rgba(236, 233, 226, 0.35);
   border-radius: 50%;
   cursor: pointer;
-  backdrop-filter: blur(6px);
   animation: music-in 1s ease 1.2s both;
 }
 .music__bars {

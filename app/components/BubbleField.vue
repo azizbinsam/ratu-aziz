@@ -20,6 +20,10 @@ interface Bubble {
 
 const TAU = Math.PI * 2
 const canvas = ref<HTMLCanvasElement | null>(null)
+// Perangkat lemah: lebih sedikit gelembung, tanpa jejak mouse, gambar 30 fps.
+const nav = navigator as Navigator & { deviceMemory?: number }
+const low = (nav.hardwareConcurrency || 8) <= 4 || (nav.deviceMemory || 8) <= 4
+let acc = 0
 const bubbles: Bubble[] = []
 const pointer = { x: -999, y: -999, active: false, lastX: 0, lastY: 0, lastT: 0 }
 
@@ -51,7 +55,7 @@ function ambient(initial: boolean): Bubble {
 }
 
 function spawn(kind: Kind, x: number, y: number, r: number, speed: number, angle: number, life: number) {
-  if (transient() > 90) return
+  if (transient() > (low ? 40 : 70)) return
   bubbles.push({
     kind, x, y, r,
     vx: Math.cos(angle) * speed,
@@ -63,7 +67,7 @@ function spawn(kind: Kind, x: number, y: number, r: number, speed: number, angle
 }
 
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const dpr = Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5)
   w = window.innerWidth
   h = window.innerHeight
   const el = canvas.value!
@@ -100,7 +104,10 @@ function draw(b: Bubble, alpha: number, scale = 1) {
 
 function tick(_t: number, dtMs: number) {
   if (!c) return
-  const dt = Math.min(dtMs, 50) / 1000
+  acc += dtMs
+  if (low && acc < 32) return
+  const dt = Math.min(acc, 50) / 1000
+  acc = 0
   const sy = window.scrollY
   const ds = sy - lastScroll
   lastScroll = sy
@@ -154,7 +161,7 @@ function onMove(e: PointerEvent) {
   pointer.x = e.clientX
   pointer.y = e.clientY
   pointer.active = mouse
-  if (!mouse) return
+  if (!mouse || low) return
   const now = performance.now()
   const dist = Math.hypot(e.clientX - pointer.lastX, e.clientY - pointer.lastY)
   if (dist > 46 && now - pointer.lastT > 70) {
@@ -183,7 +190,7 @@ onMounted(() => {
   if (!c) return
   resize()
   lastScroll = window.scrollY
-  const count = w < 768 ? 9 : 16
+  const count = low ? 5 : w < 768 ? 8 : 14
   for (let i = 0; i < count; i++) bubbles.push(ambient(true))
 
   window.addEventListener('resize', resize)
@@ -216,6 +223,5 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  mix-blend-mode: difference;
 }
 </style>

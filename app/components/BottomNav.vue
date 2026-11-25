@@ -72,10 +72,9 @@ onBeforeUnmount(() => {
     display: flex;
     width: min(94vw, 26rem);
     padding: 0.35rem;
-    background: rgba(0, 0, 0, 0.62);
+    background: rgba(0, 0, 0, 0.8);
     border: 1px solid rgba(236, 233, 226, 0.22);
     border-radius: 999px;
-    backdrop-filter: blur(10px);
     transform: translateX(-50%);
     animation: nav-in 0.9s ease 1.5s both;
   }

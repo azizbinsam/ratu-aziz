@@ -8,6 +8,7 @@ const description =
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   ssr: false,
+  spaLoadingTemplate: true, // layar hitam sejak awal, sebelum JavaScript selesai diunduh
   devtools: { enabled: false },
   runtimeConfig: {
     public: {
@@ -32,6 +33,7 @@ export default defineNuxtConfig({
         { name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
+        { rel: 'preload', as: 'image', href: '/images/hero-bw.webp', type: 'image/webp' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

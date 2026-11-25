@@ -15,6 +15,8 @@ const hero = ref<{ intro: () => void } | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const bar = ref<HTMLElement | null>(null)
 const opened = ref(false)
+const loaded = ref(false) // foto dan font selesai dimuat
+const loaderGone = ref(false)
 const playing = ref(false)
 
 const { init, lock, unlock, armAuto } = useScroll()
@@ -51,6 +53,11 @@ function toggleMusic() {
   }
 }
 
+function onLoaded() {
+  loaded.value = true
+  ScrollTrigger.refresh() // ukuran foto sudah pasti
+}
+
 async function onOpen() {
   if (opened.value) return
   opened.value = true
@@ -65,9 +72,10 @@ async function onOpen() {
 <template>
   <div>
     <div class="progress" aria-hidden="true"><span ref="bar" /></div>
-    <BubbleField />
-    <BubbleCursor />
-    <OpeningGate ref="gate" :guest="guest" @open="onOpen" />
+    <Preloader v-if="!loaderGone" @done="onLoaded" @gone="loaderGone = true" />
+    <BubbleField v-if="loaded" />
+    <BubbleCursor v-if="loaded" />
+    <OpeningGate ref="gate" :guest="guest" :start="loaded" @open="onOpen" />
 
     <div class="page">
     <ThreadLine />

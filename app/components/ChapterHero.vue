@@ -72,7 +72,7 @@ defineExpose({ intro })
       <img
         ref="img"
         class="hero__img"
-        src="/images/hero.webp"
+        src="/images/hero-bw.webp"
         alt="Ratu dan Aziz berdiri saling membelakangi di depan tirai putih"
         width="1066"
         height="1600"
@@ -113,7 +113,6 @@ defineExpose({ intro })
   width: min(100vw, calc(100svh * 0.666));
   height: 100%;
   overflow: hidden;
-  filter: grayscale(1) contrast(1.12);
 }
 .hero__img {
   position: absolute;
