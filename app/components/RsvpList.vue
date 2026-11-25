@@ -21,6 +21,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 const items = ref<Item[]>([])
 const status = ref<'loading' | 'ready' | 'error'>('loading')
+const lastError = ref('')
 const page = ref(1)
 const pages = computed(() => Math.max(1, Math.ceil(items.value.length / PER_PAGE)))
 const visible = computed(() => items.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE))
@@ -92,6 +93,57 @@ function demo(): Item[] {
   }))
 }
 
+// Cadangan bila fetch ditolak (mis. masalah CORS): memuat lewat tag <script> (JSONP).
+// Skrip Apps Script milikmu sendiri yang menjawab, jadi isinya tepercaya.
+function jsonp(url: string, timeoutMs = 7000): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const cb = `__rsvp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+    const w = window as unknown as Record<string, unknown>
+    const script = document.createElement('script')
+    const cleanup = () => {
+      clearTimeout(timer)
+      delete w[cb]
+      script.remove()
+    }
+    const timer = setTimeout(() => {
+      cleanup()
+      reject(new Error('JSONP: tidak ada jawaban (skrip belum di-deploy ulang atau akses belum "Anyone")'))
+    }, timeoutMs)
+    w[cb] = (data: unknown) => {
+      cleanup()
+      resolve(data)
+    }
+    script.onerror = () => {
+      cleanup()
+      reject(new Error('JSONP: gagal memuat'))
+    }
+    script.src = `${url}${url.includes('?') ? '&' : '?'}action=list&callback=${cb}`
+    document.head.appendChild(script)
+  })
+}
+
+async function fetchList(): Promise<Item[]> {
+  let data: { ok?: boolean; items?: unknown; error?: string } | undefined
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 7000)
+    const res = await fetch(`${endpoint}${endpoint.includes('?') ? '&' : '?'}action=list`, {
+      signal: ctrl.signal,
+      cache: 'no-store',
+    })
+    clearTimeout(timer)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    data = await res.json()
+  } catch (err) {
+    console.warn('[Ucapan] fetch gagal, mencoba JSONP:', err)
+    data = (await jsonp(endpoint)) as typeof data
+  }
+  if (!data?.ok || !Array.isArray(data.items)) {
+    throw new Error(`Jawaban tidak sesuai: ${JSON.stringify(data)?.slice(0, 160)}`)
+  }
+  return data.items.map(toItem)
+}
+
 async function load(skeletonFirst = true) {
   if (skeletonFirst) {
     status.value = 'loading'
@@ -104,16 +156,8 @@ async function load(skeletonFirst = true) {
   try {
     let list: Item[] = []
     if (endpoint) {
-      const ctrl = new AbortController()
-      const timer = setTimeout(() => ctrl.abort(), 9000)
-      const res = await fetch(`${endpoint}${endpoint.includes('?') ? '&' : '?'}action=list`, {
-        signal: ctrl.signal,
-        cache: 'no-store',
-      })
-      clearTimeout(timer)
-      const data = await res.json()
-      if (!data?.ok || !Array.isArray(data.items)) throw new Error('format')
-      list = data.items.map(toItem)
+      list = await fetchList()
+      console.info(`[Ucapan] ${list.length} entri diterima`)
     } else if (import.meta.dev) {
       await sleep(900)
       list = demo() // contoh data saat pengembangan, tanpa endpoint
@@ -124,7 +168,9 @@ async function load(skeletonFirst = true) {
     status.value = 'ready'
     await nextTick()
     intro()
-  } catch {
+  } catch (err) {
+    console.warn('[Ucapan] gagal memuat daftar:', err)
+    lastError.value = err instanceof Error ? err.message : String(err)
     skeleton?.kill()
     status.value = 'error'
   }
@@ -294,6 +340,7 @@ defineExpose({ add })
 
       <div v-else-if="status === 'error'" class="wishes__state">
         <p>Daftar ucapan belum bisa dimuat.</p>
+        <p v-if="lastError" class="wishes__hint">{{ lastError }}</p>
         <button class="btn" type="button" @click="load()">Coba lagi</button>
       </div>
 
@@ -379,6 +426,7 @@ defineExpose({ add })
 .wishes__box { position: relative; margin-top: 2.4rem; }
 .wishes__state { padding: 2rem 0; color: var(--stone); display: grid; gap: 1.2rem; justify-items: start; }
 
+.wishes__hint { font-size: 0.8rem; opacity: 0.7; overflow-wrap: anywhere; }
 .wishes__skeletons { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2rem; }
 .sk { height: 5.2rem; background: rgba(236, 233, 226, 0.08); }
 

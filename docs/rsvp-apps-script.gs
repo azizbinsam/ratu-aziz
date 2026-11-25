@@ -48,9 +48,28 @@ function doPost(e) {
 
 // Hanya nama, kehadiran, ucapan, dan waktu yang dikirim ke situs.
 // Jumlah tamu dan nama di tautan tidak pernah keluar dari spreadsheet.
+// Parameter "callback" dipakai situs sebagai cadangan (JSONP) bila fetch biasa ditolak browser.
 function doGet(e) {
-  if (e && e.parameter && e.parameter.action === 'list') return json({ ok: true, items: readList() })
-  return json({ ok: true })
+  const p = (e && e.parameter) || {}
+  let body
+  try {
+    body = p.action === 'list' ? { ok: true, items: readList() } : { ok: true }
+  } catch (err) {
+    body = { ok: false, error: String(err) }
+  }
+  const cb = p.callback
+  if (cb && /^[A-Za-z_$][\w$.]*$/.test(cb)) {
+    return ContentService.createTextOutput(cb + '(' + JSON.stringify(body) + ')').setMimeType(
+      ContentService.MimeType.JAVASCRIPT,
+    )
+  }
+  return json(body)
+}
+
+// Uji dari editor Apps Script: pilih fungsi "testList" lalu Run, lihat hasilnya di Execution log.
+// Sekali jalankan juga untuk memberi izin akses bila diminta.
+function testList() {
+  Logger.log(JSON.stringify(readList(), null, 2))
 }
 
 function readList() {
