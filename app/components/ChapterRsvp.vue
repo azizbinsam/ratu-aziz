@@ -17,6 +17,7 @@ const form = reactive({
   website: '', // kolom jebakan untuk bot
 })
 const state = ref<'idle' | 'sending' | 'sent'>('idle')
+const list = ref<{ add: (e: { name: string; attendance: 'hadir' | 'tidak'; message: string; time: string }) => void } | null>(null)
 const error = ref('')
 
 async function submit() {
@@ -45,6 +46,13 @@ async function submit() {
     } else {
       throw new Error('RSVP belum dihubungkan')
     }
+    // Langsung tampil di daftar ucapan tanpa menunggu muat ulang
+    list.value?.add({
+      name: form.name.trim(),
+      attendance: form.attendance as 'hadir' | 'tidak',
+      message: form.message.trim(),
+      time: new Date().toISOString(),
+    })
     state.value = 'sent'
   } catch {
     error.value = 'Pesan belum terkirim. Periksa koneksi Anda, lalu coba lagi.'
@@ -136,7 +144,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="bab-5" ref="root" class="rsvp">
-    <p class="mark">RSVP</p>
+    <p class="mark">Bab V</p>
 
     <div class="rsvp__wrap">
       <h2 class="rsvp__title">Konfirmasi<br />kehadiran</h2>
@@ -187,6 +195,10 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <div class="wishes-host">
+      <RsvpList ref="list" />
+    </div>
+
     <div class="gift">
       <h2 class="rsvp__title">Amplop digital</h2>
       <p class="gift__intro">
@@ -221,6 +233,7 @@ onBeforeUnmount(() => {
 .rsvp__wrap,
 .gift { max-width: 40rem; margin: 6svh auto 0; }
 .gift { margin-top: 22svh; }
+.wishes-host { max-width: 40rem; margin: 22svh auto 0; }
 
 .rsvp__title {
   font-family: var(--display);
